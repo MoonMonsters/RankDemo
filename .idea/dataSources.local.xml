@@ -2,19 +2,22 @@
 <project version="4">
   <component name="dataSourceStorageLocal">
     <data-source name="db" uuid="cf7bae4e-a6d3-4c93-9608-4d06cfe582da">
-      <database-info product="SQLite" version="3.25.1" jdbc-version="2.1" driver-name="SQLite JDBC" driver-version="3.25.1" family="SQLITE" exact-version="3.25.1">
-        <identifier-quote-string>&quot;</identifier-quote-string>
-      </database-info>
-      <case-sensitivity plain-identifiers="mixed" quoted-identifiers="mixed" />
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" />
+      <auth-required>false</auth-required>
       <introspection-schemas>*:</introspection-schemas>
     </data-source>
     <data-source name="db [2]" uuid="48297025-c7fd-43fb-9038-cbcdd7d605e6">
-      <database-info product="SQLite" version="3.25.1" jdbc-version="2.1" driver-name="SQLite JDBC" driver-version="3.25.1" family="SQLITE" exact-version="3.25.1">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" />
+      <auth-required>false</auth-required>
+    </data-source>
+    <data-source name="db.sqlite3 [2]" uuid="d62c7d93-cbef-4627-8651-b97a4eb1a30e">
+      <database-info product="SQLite" version="3.25.1" jdbc-version="2.1" driver-name="SQLite JDBC" driver-version="3.25.1">
         <identifier-quote-string>&quot;</identifier-quote-string>
       </database-info>
       <case-sensitivity plain-identifiers="mixed" quoted-identifiers="mixed" />
+      <secret-storage>master_key</secret-storage>
       <auth-required>false</auth-required>
-      <introspection-schemas>*:@</introspection-schemas>
+      <introspection-schemas>*:main</introspection-schemas>
     </data-source>
   </component>
 </project>
