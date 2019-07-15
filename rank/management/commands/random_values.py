@@ -7,9 +7,10 @@ faker = Faker(locale='en_US')
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        for i in range(1000):
+        for i in range(100):
             try:
-                Username.objects.create(name=faker.name())
+                name = Username.objects.create(name=faker.name())
+                print('>>>name = ' + str(name))
             except:
                 import traceback
                 traceback.print_exc()

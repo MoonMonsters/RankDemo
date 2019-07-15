@@ -2,6 +2,7 @@ import threading
 import sys
 
 from django_redis import get_redis_connection
+from django.db.models.aggregates import Sum
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
@@ -31,7 +32,7 @@ class RankView(APIView):
         # 今日排行榜
         if rank_type == RANK_TYPE_TODAY:
             values = self._get_today_rank_data()
-        # 上月排行榜
+        # 当月排行榜
         elif rank_type == RANK_TYPE_MONTH:
             values = self._get_last_month_rank_data()
 
@@ -61,7 +62,7 @@ class RankView(APIView):
             values = [{'value': k.decode("utf-8"), 'count': int(v)} for k, v in values][::-1]
         else:
             _this_month = this_month()
-            from django.db.models.aggregates import Sum
+            # 使用聚合函数，分类计算每个产品的搜索量
             data = RankData.objects.filter(cache_date__year=_this_month.year,
                                            cache_date__month=_this_month.month).values(
                 'value').distinct().annotate(count=Sum('count')).order_by('-count')
