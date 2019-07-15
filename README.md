@@ -20,7 +20,7 @@ python manage.py runserver
 ```
 
 ### 执行celery
--B 执行定时任务
+-B 执行定时任务 <br/>
 -A 执行异步任务
 ```python
 celery -B -A RankDemo worker
@@ -42,6 +42,6 @@ celery flower
 
 ### 访问
 访问链接有三个:
-`http://127.0.0.1:8000/rank/?rtype=month` 访问当月排行榜
-`http://127.0.0.1:8000/rank/?rtype=today` 访问今日排行榜
-`http://127.0.0.1:8000/search/?key=Ann` 搜索时返回的值的搜索量+1
+`http://127.0.0.1:8000/rank/?rtype=month` 访问当月排行榜 <br/>
+`http://127.0.0.1:8000/rank/?rtype=today` 访问今日排行榜 <br/>
+`http://127.0.0.1:8000/search/?key=Ann` 搜索时返回的值的搜索量+1 <br/>
