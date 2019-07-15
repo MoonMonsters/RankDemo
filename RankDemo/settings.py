@@ -38,7 +38,7 @@ INSTALLED_APPS = [
 
     'rank',
     'rest_framework',
-    'djcelery',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -127,40 +127,3 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
-
-import djcelery
-from kombu import Queue
-
-djcelery.setup_loader()
-# BROKER_URL = 'redis://127.0.0.1:6379/3'
-# CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/4'
-CELERY_BROKER_URL = 'amqp://guest:guest@127.0.0.1:5672//'
-# 配置 celery backend
-CELERY_RESULT_BACKEND = 'amqp://guest:guest@127.0.0.1:5672//'
-CELERY_IMPORTS = (
-    'rank.tasks',
-)
-CELRY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_ACCEPT_CONTENT = ['json']
-# 时区设置
-CELERY_TIMEZONE = 'Asia/Shanghai'
-CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
-from celery.schedules import crontab
-from celery.schedules import timedelta
-
-CELERYBEAT_SCHEDULE = {  # 定时器策略
-    # 定时任务一：　每隔30s运行一次
-    '定时保存排行榜数据到数据库中': {
-        "task": "rank.tasks.save_rank_values",
-        # "schedule": crontab(minute='*/2'),  # or 'schedule':   timedelta(seconds=3),
-        "schedule": timedelta(seconds=30),
-        "args": (),
-    },
-}
-CELERY_QUEUES = (
-    Queue('djcelery_demo', routing_key='djcelery.demo'),
-)
-#############################
-# celery 配置信息 end
-#############################
