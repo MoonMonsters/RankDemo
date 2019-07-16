@@ -34,10 +34,11 @@ class Command(BaseCommand):
         生成20天的排行榜数据
         """
         now = datetime.datetime.now()
-        for day in range(20, 40):
+        # TODO 按需要调整时间
+        for day in range(0, 20):
             pre_day = now - datetime.timedelta(days=day)
             date = datetime.date(year=pre_day.year, month=pre_day.month, day=pre_day.day)
-            key = 'rank_value:' + str(date)
+            key = 'rank_today_data:' + str(date)
             self.__random_today_data(key)
 
     @staticmethod

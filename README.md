@@ -25,6 +25,10 @@ python manage.py runserver
 ```python
 celery -B -A RankDemo worker
 ```
+执行指定队列(for_task)中的异步任务
+```python
+celery -A RankDemo worker -Q for_task -l info
+```
 
 ### admin添加任务
 也可以进入后台`http://127.0.0.1:8000/admin/django_celery_beat/periodictask/`，添加定时任务，前提是安装了`django-celery-beat==1.5.0`库

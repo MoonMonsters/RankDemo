@@ -6,13 +6,14 @@ from django_redis import get_redis_connection
 
 from RankDemo.celery import app
 from rank.models import RankData
-from rank.utils.const import RANK_YESTERDAY_DATA_KEY, INT_MAX_VALUE
+from rank.utils.const import RANK_YESTERDAY_DATA_KEY, INT_MAX_VALUE, RANK_TODAY_DATA_KEY
+from rank.utils.operation import load_rank_month_data_db2redis
 
 redis = get_redis_connection()
 
 
 @app.task()
-def save_rank_values():
+def save_rank_today_data():
     """
     将每天的排行榜数据存入到数据库中，同时删除redis中的数据
     """
@@ -28,12 +29,34 @@ def save_rank_values():
         data.save(update_fields=['count'])
 
     # TODO 为什么无法调用delete函数？明明存在
-    _del = getattr(redis, 'delete')
-    print('>>>_del.type = ' + str(_del))
+    # _del = getattr(redis, 'delete')
+    # print('>>>_del.type = ' + str(_del))
     # 删除缓存
     # if hasattr(redis, 'delete'):
     #     _del = getattr(redis, 'delete')
     #     print('>>>_del = ' + str(_del))
     #     redis.delele(RANK_YESTERDAY_DATA_KEY)
     # else:
+    # TODO: 使用时需要打开此行代码
+    # 按搜索量区间删除数据（delete函数无法使用）
     redis.zremrangebyscore(RANK_YESTERDAY_DATA_KEY, 0, INT_MAX_VALUE)
+
+
+@app.task()
+def load_rank_month_data():
+    """
+    每天计算一次当月排行榜，加载进redis中
+    """
+    print('>>> 从数据库中读取月排行榜数据到缓存中...')
+    load_rank_month_data_db2redis()
+
+
+@app.task()
+def add_rank_value(models):
+    """
+    每次搜索时，搜索值都加1
+    """
+    print('>>> 执行异步任务，搜索量+1')
+    for model in list(models):
+        for _, name in model.items():
+            redis.zincrby(RANK_TODAY_DATA_KEY, 1, name)

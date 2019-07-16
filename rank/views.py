@@ -1,17 +1,17 @@
 import threading
-import sys
 
 from django_redis import get_redis_connection
-from django.db.models.aggregates import Sum
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from rank.models import Username, RankData
+from rank.models import Username
 from rank.utils.serializers import UsernameSerializer
 from rank.utils.paginations import RankPagination
-from rank.utils.const import RANK_TODAY_DATA_KEY, RANK_MONTH_DATA_KEY, this_month
+from rank.utils.const import RANK_TODAY_DATA_KEY, RANK_MONTH_DATA_KEY, INT_MAX_VALUE
+from rank.utils.operation import load_rank_month_data_db2redis
+from rank.utils.tasks import add_rank_value
 
 redis = get_redis_connection()
 
@@ -31,48 +31,38 @@ class RankView(APIView):
 
         # 今日排行榜
         if rank_type == RANK_TYPE_TODAY:
-            values = self._get_today_rank_data()
+            values = self.__get_today_rank_data()
         # 当月排行榜
         elif rank_type == RANK_TYPE_MONTH:
-            values = self._get_last_month_rank_data()
+            values = self.__get_last_month_rank_data()
 
         return Response(values, status=status.HTTP_200_OK)
 
     @staticmethod
-    def _get_today_rank_data():
+    def __get_today_rank_data():
         """
         获取今天排行榜
         """
         # 按score值获取排序值
-        values = redis.zrangebyscore(RANK_TODAY_DATA_KEY, 0, sys.maxsize, start=0, num=100, withscores=True)
+        values = redis.zrangebyscore(RANK_TODAY_DATA_KEY, 0, INT_MAX_VALUE, start=0, num=100, withscores=True)
         # 将byte转str
         values = [{'value': k.decode("utf-8"), 'count': int(v)} for k, v in values][::-1]
 
         return values
 
     @staticmethod
-    def _get_last_month_rank_data():
+    def __get_last_month_rank_data():
         """
         获取本月排行榜
         """
         # 按score值获取排序值
-        values = redis.zrangebyscore(RANK_MONTH_DATA_KEY, 0, sys.maxsize, start=0, num=100, withscores=True)
+        values = redis.zrangebyscore(RANK_MONTH_DATA_KEY, 0, INT_MAX_VALUE, start=0, num=100, withscores=True)
         if values:
             # 将byte转str
             values = [{'value': k.decode("utf-8"), 'count': int(v)} for k, v in values][::-1]
         else:
-            _this_month = this_month()
-            # 使用聚合函数，分类计算每个产品的搜索量
-            data = RankData.objects.filter(cache_date__year=_this_month.year,
-                                           cache_date__month=_this_month.month).values(
-                'value').distinct().annotate(count=Sum('count')).order_by('-count')
-            values = list(data[:100])
-            # 将从数据库中读取的数据，放到redis中
-            if values:
-                for value in values:
-                    v = value.get('value')
-                    count = value.get('count')
-                    redis.zincrby(RANK_MONTH_DATA_KEY, count, v)
+            # 如果缓存中没有月榜数据，就从数据库中读取
+            values = load_rank_month_data_db2redis()
 
         return values
 
@@ -94,16 +84,7 @@ class SearchView(generics.ListAPIView):
         page = self.paginate_queryset(self.get_queryset())
         serializer = self.get_serializer(page, many=True)
 
-        # 子线程中去计算+1
-        threading.Thread(target=self._add_rank_value, args=(serializer.data,)).start()
+        # 执行异步任务， 搜索量+1
+        add_rank_value.apply_async(args=(serializer.data,), routing_key='for_task', queue='for_task')
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @staticmethod
-    def _add_rank_value(models):
-        """
-        每次搜索时，搜索值都加1
-        """
-        for model in list(models):
-            for _, name in model.items():
-                redis.zincrby(RANK_TODAY_DATA_KEY, 1, name)
