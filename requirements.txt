@@ -9,7 +9,7 @@ django-rest-framework==0.1.0
 django-timezone-field==3.0
 djangorestframework==3.9.4
 Faker==1.0.7
-flower==0.9.3
+flower==1.2.0
 kombu==4.6.3
 PyMySQL==0.9.3
 python-crontab==2.3.8
